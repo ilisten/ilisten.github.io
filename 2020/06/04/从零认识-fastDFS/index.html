@@ -107,22 +107,216 @@
 <ul>
 <li><p>同时会写一份 <code>binlog</code>。</p>
 <blockquote>
-<figure class="highlight plain"><figcaption><span>里不包含文件数据，只包含文件名等元信息，这份 ```binlog``` 用于后台同步</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">*Storage Server* 会记录向 *Group* 内其他 *Storage Server* 同步的进度，以便重启后能接上次的进度继续同步</span><br><span class="line"></span><br><span class="line">进度以 **时间戳** 的方式进行记录，所以最好能保证集群内所有server的时钟保持同步。</span><br><span class="line"></span><br><span class="line">*Storage Server* 的同步进度会作为元数据的一部分汇报到 *Tracker Server* 上，*Tracker Server* 在选择读 *Storage Server* 的时候会以同步进度作为参考</span><br><span class="line"></span><br><span class="line">## 3. 服务架构方案</span><br><span class="line"></span><br><span class="line">| 公司&#x2F;组织 | 链接 |</span><br><span class="line">| :---- | :---- |</span><br><span class="line">| 中通 | &lt;https:&#x2F;&#x2F;www.secrss.com&#x2F;articles&#x2F;8139&gt; |</span><br><span class="line">| 七牛 | &lt;https:&#x2F;&#x2F;blog.qiniu.com&#x2F;archives&#x2F;198&gt; |</span><br><span class="line"></span><br><span class="line">### 3.1 集群部署示例</span><br><span class="line"></span><br><span class="line">&lt;https:&#x2F;&#x2F;t.hao0.me&#x2F;storage&#x2F;2016&#x2F;05&#x2F;10&#x2F;fastdfs-practice.html&gt;</span><br><span class="line"></span><br><span class="line">摘录如下：</span><br><span class="line"></span><br><span class="line">- 环境介绍</span><br><span class="line"></span><br><span class="line">   |||</span><br><span class="line">   | :--- | :--- |</span><br><span class="line">   | 操作系统 | Centos6.7 Final |</span><br><span class="line">   | FastDFS版本 | fastdfs-5.05.tar.gz |</span><br><span class="line">   | libfastcommon | &lt;https:&#x2F;&#x2F;github.com&#x2F;happyfish100&#x2F;libfastcommon&gt; |</span><br><span class="line">   | nginx | nginx-1.9.9.tar.gz |</span><br><span class="line">   | fastdfs-nginx-module | fastdfs-nginx-module_1.16 |</span><br><span class="line"></span><br><span class="line">   demo 开发环境</span><br><span class="line"></span><br><span class="line"> ![开发环境](.&#x2F;images&#x2F;fastdfs-demo-jiagou.png)</span><br><span class="line"></span><br><span class="line">- 公共库 libfastcommon 安装</span><br><span class="line"></span><br><span class="line">需要注意fastdfs和fastcommon的安装目录，后面安装fastdfs-nginx-module时需要配置</span><br><span class="line"></span><br><span class="line">   &#96;&#96;&#96;bash</span><br><span class="line">   git clone git@github.com:happyfish100&#x2F;libfastcommon.git</span><br><span class="line">   cd libfastcommon</span><br><span class="line">   .&#x2F;make.sh</span><br><span class="line">   .&#x2F;make.sh install </span><br></pre></td></tr></table></figure>
+<p><code>binlog</code> 里不包含文件数据，只包含文件名等元信息，这份 <code>binlog</code> 用于后台同步</p>
+<p><em>Storage Server</em> 会记录向 <em>Group</em> 内其他 <em>Storage Server</em> 同步的进度，以便重启后能接上次的进度继续同步</p>
+<p>进度以 <strong>时间戳</strong> 的方式进行记录，所以最好能保证集群内所有server的时钟保持同步。</p>
 </blockquote>
+<p><em>Storage Server</em> 的同步进度会作为元数据的一部分汇报到 <em>Tracker Server</em> 上，<em>Tracker Server</em> 在选择读 <em>Storage Server</em> 的时候会以同步进度作为参考</p>
+</li>
+</ul>
+<h2 id="3-服务架构方案"><a href="#3-服务架构方案" class="headerlink" title="3. 服务架构方案"></a>3. 服务架构方案</h2><table>
+<thead>
+<tr>
+<th align="left">公司/组织</th>
+<th align="left">链接</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">中通</td>
+<td align="left"><a href="https://www.secrss.com/articles/8139" target="_blank" rel="noopener">https://www.secrss.com/articles/8139</a></td>
+</tr>
+<tr>
+<td align="left">七牛</td>
+<td align="left"><a href="https://blog.qiniu.com/archives/198" target="_blank" rel="noopener">https://blog.qiniu.com/archives/198</a></td>
+</tr>
+</tbody></table>
+<h3 id="3-1-集群部署示例"><a href="#3-1-集群部署示例" class="headerlink" title="3.1 集群部署示例"></a>3.1 集群部署示例</h3><blockquote>
+<p><a href="https://t.hao0.me/storage/2016/05/10/fastdfs-practice.html" target="_blank" rel="noopener">https://t.hao0.me/storage/2016/05/10/fastdfs-practice.html</a></p>
+</blockquote>
+<p>摘录如下：</p>
+<ul>
+<li><p>环境介绍</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left"></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">操作系统</td>
+<td align="left">Centos6.7 Final</td>
+</tr>
+<tr>
+<td align="left">FastDFS版本</td>
+<td align="left">fastdfs-5.05.tar.gz</td>
+</tr>
+<tr>
+<td align="left">libfastcommon</td>
+<td align="left"><a href="https://github.com/happyfish100/libfastcommon" target="_blank" rel="noopener">https://github.com/happyfish100/libfastcommon</a></td>
+</tr>
+<tr>
+<td align="left">nginx</td>
+<td align="left">nginx-1.9.9.tar.gz</td>
+</tr>
+<tr>
+<td align="left">fastdfs-nginx-module</td>
+<td align="left">fastdfs-nginx-module_1.16</td>
+</tr>
+</tbody></table>
+<p>  demo 开发环境</p>
+<p><img src="./images/fastdfs-demo-jiagou.png" alt="开发环境"></p>
+</li>
+<li><p>公共库 libfastcommon 安装</p>
+<blockquote>
+<p>需要注意fastdfs和fastcommon的安装目录，后面安装fastdfs-nginx-module时需要配置</p>
+</blockquote>
+<pre class="line-numbers language-bash"><code class="language-bash">  <span class="token function">git</span> clone git@github.com:happyfish100/libfastcommon.git
+  <span class="token function">cd</span> libfastcommon
+  ./make.sh
+  ./make.sh <span class="token function">install</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p>fastdfs 安装</p>
-  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">tar -zxf fastdfs-5.05.tar.gz</span><br><span class="line"><span class="built_in">cd</span> fastdfs-5.05</span><br><span class="line">./make.sh</span><br><span class="line">./make.sh install</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash"><code class="language-bash">  <span class="token function">tar</span> -zxf fastdfs-5.05.tar.gz
+  <span class="token function">cd</span> fastdfs-5.05
+  ./make.sh
+  ./make.sh <span class="token function">install</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p>Tracker 安装</p>
 <ol>
 <li><p>配置Tracker(vim /etc/fdfs/tracker.conf)：</p>
- <figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 是否禁用该配置文件</span></span><br><span class="line"><span class="comment"># false：开启</span></span><br><span class="line"><span class="comment"># true：禁用</span></span><br><span class="line"><span class="attr">disabled</span>=<span class="string">false</span></span><br><span class="line"><span class="comment"># 绑定地址</span></span><br><span class="line"><span class="comment"># 空字符表示绑定所有地址</span></span><br><span class="line"><span class="attr">bind_addr</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 端口设置</span></span><br><span class="line"><span class="attr">port</span>=<span class="string">22122</span></span><br><span class="line"><span class="comment"># 连接超时设置</span></span><br><span class="line"><span class="attr">connect_timeout</span>=<span class="string">30</span></span><br><span class="line"><span class="comment"># 网络超时设置</span></span><br><span class="line"><span class="attr">network_timeout</span>=<span class="string">30</span></span><br><span class="line"><span class="comment"># 存储数据和日志的目录</span></span><br><span class="line"><span class="attr">base_path</span>=<span class="string">/mnt/fastdfs</span></span><br><span class="line"><span class="comment"># 最大并发连接数</span></span><br><span class="line"><span class="attr">max_connections</span>=<span class="string">256</span></span><br><span class="line"><span class="comment"># 接受请求的线程数</span></span><br><span class="line"><span class="attr">accept_threads</span>=<span class="string">1</span></span><br><span class="line"><span class="comment"># 执行请求的线程数 &lt;= max_connections</span></span><br><span class="line"><span class="attr">work_threads</span>=<span class="string">4</span></span><br><span class="line"><span class="comment"># 如何选择上传文件的存储group</span></span><br><span class="line"><span class="comment"># 0: 轮询</span></span><br><span class="line"><span class="comment"># 1: 制定group名称</span></span><br><span class="line"><span class="comment"># 2: 负载均衡, 选择空闲空间最大的存储group</span></span><br><span class="line"><span class="attr">store_lookup</span>=<span class="string">2</span></span><br><span class="line"><span class="comment"># 选择哪一个存储group，当store_lookup=1时，须指定存储group的名称</span></span><br><span class="line"><span class="attr">store_group</span>=<span class="string">group2</span></span><br><span class="line"><span class="comment"># 如何选择上传文件的存储server</span></span><br><span class="line"><span class="comment"># 0: 轮询</span></span><br><span class="line"><span class="comment"># 1: 以ip地址排序的第一个地址</span></span><br><span class="line"><span class="comment"># 2: 以优先级排序</span></span><br><span class="line"><span class="attr">store_server</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 选择存储server的哪一个路径(磁盘或挂载点)上传文件</span></span><br><span class="line"><span class="comment"># 0: 轮询</span></span><br><span class="line"><span class="comment"># 2: 负载均衡, 选择空闲空间最大的路径来存储文件</span></span><br><span class="line"><span class="attr">store_path</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 选择哪一个存储server下载文件</span></span><br><span class="line"><span class="comment"># 0: 轮询</span></span><br><span class="line"><span class="comment"># 1: 选择该文件上传时的那个存储server</span></span><br><span class="line"><span class="attr">download_server</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 预留的存储空间 G(GB) M(MB) K(KB) 默认byte(B)，% 表示比例，如下，预留的存储空间为10%，即只占用90%</span></span><br><span class="line"><span class="attr">reserved_storage_space</span> = <span class="string">10%</span></span><br><span class="line"><span class="comment"># log级别：alert error notice info debug</span></span><br><span class="line"><span class="attr">log_level</span>=<span class="string">info</span></span><br><span class="line"><span class="comment"># 运行用户组，默认当前用户组</span></span><br><span class="line"><span class="attr">run_by_group</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 运行用户，默认当前用户</span></span><br><span class="line"><span class="attr">run_by_user</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 允许的host，例子如下</span></span><br><span class="line"><span class="comment"># "*" 表示所有</span></span><br><span class="line"><span class="comment"># 10.0.1.[1-15,20]</span></span><br><span class="line"><span class="comment"># host[01-08,20-25].domain.com:</span></span><br><span class="line"><span class="comment"># allow_hosts=10.0.1.[1-15,20]</span></span><br><span class="line"><span class="comment"># allow_hosts=host[01-08,20-25].domain.com</span></span><br><span class="line"><span class="attr">allow_hosts</span>=<span class="string">*</span></span><br><span class="line"><span class="comment"># 同步内存日志到磁盘的间隔时间，默认10s</span></span><br><span class="line"><span class="attr">sync_log_buff_interval</span> = <span class="string">10</span></span><br><span class="line"><span class="comment"># 检查存储server存活的间隔时间，默认120s</span></span><br><span class="line"><span class="attr">check_active_interval</span> = <span class="string">120</span></span><br><span class="line"><span class="comment"># 线程栈大小 &gt;= 64KB</span></span><br><span class="line"><span class="attr">thread_stack_size</span> = <span class="string">64KB</span></span><br><span class="line"><span class="comment"># 当存储server变化时，是否自动调整存储server的ip</span></span><br><span class="line"><span class="attr">storage_ip_changed_auto_adjust</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"># 存储server同步文件的最大延时，默认86400s(1天)</span></span><br><span class="line"><span class="attr">storage_sync_file_max_delay</span> = <span class="string">86400</span></span><br><span class="line"><span class="comment"># 存储server同步一个文件的最大时间</span></span><br><span class="line"><span class="attr">storage_sync_file_max_time</span> = <span class="string">300</span></span><br><span class="line"><span class="comment"># 是否用一个主文件存储多个小文件</span></span><br><span class="line"><span class="attr">use_trunk_file</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 最小的slot大小(多个小文件之间的空隙大小)，小于4k</span></span><br><span class="line"><span class="attr">slot_min_size</span> = <span class="string">256</span></span><br><span class="line"><span class="comment"># 最大的slot大小(多个小文件之间的空隙大小) &gt; slot_min_size</span></span><br><span class="line"><span class="comment"># 当上传的文件大小 &lt; slot_max_size时，那么该文件将合并到一个主文件</span></span><br><span class="line"><span class="attr">slot_max_size</span> = <span class="string">16MB</span></span><br><span class="line"><span class="comment"># 主文件大小 &gt;= 4MB</span></span><br><span class="line"><span class="attr">trunk_file_size</span> = <span class="string">64MB</span></span><br><span class="line"><span class="comment"># 是否提前创建trunk文件</span></span><br><span class="line"><span class="attr">trunk_create_file_advance</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 创建trunk文件的基准时间</span></span><br><span class="line"><span class="attr">trunk_create_file_time_base</span> = <span class="string">02:00</span></span><br><span class="line"><span class="comment"># 创建trunk文件的间隔时间，默认86400s(1天)</span></span><br><span class="line"><span class="attr">trunk_create_file_interval</span> = <span class="string">86400</span></span><br><span class="line"><span class="comment"># 创建trunk文件的阈值空间</span></span><br><span class="line"><span class="attr">trunk_create_file_space_threshold</span> = <span class="string">20G</span></span><br><span class="line"><span class="comment"># 当加载trunk空间空间时，是否检查trunk空间占用情况，设置为true，启动会变慢</span></span><br><span class="line"><span class="attr">trunk_init_check_occupying</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 是否忽略storage_trunk.dat</span></span><br><span class="line"><span class="attr">trunk_init_reload_from_binlog</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 压缩trunk binlog文件的间隔时间</span></span><br><span class="line"><span class="comment"># 0表示不压缩</span></span><br><span class="line"><span class="attr">trunk_compress_binlog_min_interval</span> = <span class="string">0</span></span><br><span class="line"><span class="comment"># 是否使用storage ID，而不是ip地址</span></span><br><span class="line"><span class="attr">use_storage_id</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 定义storage ids文件，相对或绝对路径</span></span><br><span class="line"><span class="attr">storage_ids_filename</span> = <span class="string">storage_ids.conf</span></span><br><span class="line"><span class="comment"># 存储id类型，当use_storage_id=true时有效</span></span><br><span class="line"><span class="comment">## ip: 存储server的IP</span></span><br><span class="line"><span class="comment">## id: 存储server的ID</span></span><br><span class="line"><span class="attr">id_type_in_filename</span> = <span class="string">ip</span></span><br><span class="line"><span class="comment"># 是否使用链接文件存储slave文件</span></span><br><span class="line"><span class="attr">store_slave_file_use_link</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 是否滚动错误日志文件</span></span><br><span class="line"><span class="attr">rotate_error_log</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 滚动错误日志文件的时间点</span></span><br><span class="line"><span class="attr">error_log_rotate_time</span>=<span class="string">00:00</span></span><br><span class="line"><span class="comment"># 当错误日志文件超出该值时，滚动错误日志文件</span></span><br><span class="line"><span class="attr">rotate_error_log_size</span> = <span class="string">0</span></span><br><span class="line"><span class="comment"># 保存日志文件的天数</span></span><br><span class="line"><span class="comment"># 0表示不删除日志文件</span></span><br><span class="line"><span class="attr">log_file_keep_days</span> = <span class="string">0</span></span><br><span class="line"><span class="comment"># 是否使用连接池</span></span><br><span class="line"><span class="attr">use_connection_pool</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 连接最大空闲时间</span></span><br><span class="line"><span class="attr">connection_pool_max_idle_time</span> = <span class="string">3600</span></span><br><span class="line"><span class="comment"># tracker的http端口</span></span><br><span class="line"><span class="meta">http.server_port</span>=<span class="string">8080</span></span><br><span class="line"><span class="comment"># 检查http server存活的时间间隔</span></span><br><span class="line"><span class="meta">http.check_alive_interval</span>=<span class="string">30</span></span><br><span class="line"><span class="comment"># 检查http sever存活的类型</span></span><br><span class="line"><span class="comment">#   tcp : 仅连接http端口，不发请求</span></span><br><span class="line"><span class="comment">#   http: 发http请求，并需返回200</span></span><br><span class="line"><span class="comment"># default value is tcp</span></span><br><span class="line"><span class="meta">http.check_alive_type</span>=<span class="string">tcp</span></span><br><span class="line"><span class="comment"># 检查http server的uri</span></span><br><span class="line"><span class="meta">http.check_alive_uri</span>=<span class="string">/status.html</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-properties"><code class="language-properties"><span class="token comment" spellcheck="true"> # 是否禁用该配置文件</span>
+<span class="token comment" spellcheck="true"> # false：开启</span>
+<span class="token comment" spellcheck="true"> # true：禁用</span>
+<span class="token attr-name"> disabled</span><span class="token punctuation">=</span><span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 绑定地址</span>
+<span class="token comment" spellcheck="true"> # 空字符表示绑定所有地址</span>
+<span class="token attr-name"> bind_addr</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 端口设置</span>
+<span class="token attr-name"> port</span><span class="token punctuation">=</span><span class="token attr-value">22122</span>
+<span class="token comment" spellcheck="true"> # 连接超时设置</span>
+<span class="token attr-name"> connect_timeout</span><span class="token punctuation">=</span><span class="token attr-value">30</span>
+<span class="token comment" spellcheck="true"> # 网络超时设置</span>
+<span class="token attr-name"> network_timeout</span><span class="token punctuation">=</span><span class="token attr-value">30</span>
+<span class="token comment" spellcheck="true"> # 存储数据和日志的目录</span>
+<span class="token attr-name"> base_path</span><span class="token punctuation">=</span><span class="token attr-value">/mnt/fastdfs</span>
+<span class="token comment" spellcheck="true"> # 最大并发连接数</span>
+<span class="token attr-name"> max_connections</span><span class="token punctuation">=</span><span class="token attr-value">256</span>
+<span class="token comment" spellcheck="true"> # 接受请求的线程数</span>
+<span class="token attr-name"> accept_threads</span><span class="token punctuation">=</span><span class="token attr-value">1</span>
+<span class="token comment" spellcheck="true"> # 执行请求的线程数 &lt;= max_connections</span>
+<span class="token attr-name"> work_threads</span><span class="token punctuation">=</span><span class="token attr-value">4</span>
+<span class="token comment" spellcheck="true"> # 如何选择上传文件的存储group</span>
+<span class="token comment" spellcheck="true"> # 0: 轮询</span>
+<span class="token comment" spellcheck="true"> # 1: 制定group名称</span>
+<span class="token comment" spellcheck="true"> # 2: 负载均衡, 选择空闲空间最大的存储group</span>
+<span class="token attr-name"> store_lookup</span><span class="token punctuation">=</span><span class="token attr-value">2</span>
+<span class="token comment" spellcheck="true"> # 选择哪一个存储group，当store_lookup=1时，须指定存储group的名称</span>
+<span class="token attr-name"> store_group</span><span class="token punctuation">=</span><span class="token attr-value">group2</span>
+<span class="token comment" spellcheck="true"> # 如何选择上传文件的存储server</span>
+<span class="token comment" spellcheck="true"> # 0: 轮询</span>
+<span class="token comment" spellcheck="true"> # 1: 以ip地址排序的第一个地址</span>
+<span class="token comment" spellcheck="true"> # 2: 以优先级排序</span>
+<span class="token attr-name"> store_server</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 选择存储server的哪一个路径(磁盘或挂载点)上传文件</span>
+<span class="token comment" spellcheck="true"> # 0: 轮询</span>
+<span class="token comment" spellcheck="true"> # 2: 负载均衡, 选择空闲空间最大的路径来存储文件</span>
+<span class="token attr-name"> store_path</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 选择哪一个存储server下载文件</span>
+<span class="token comment" spellcheck="true"> # 0: 轮询</span>
+<span class="token comment" spellcheck="true"> # 1: 选择该文件上传时的那个存储server</span>
+<span class="token attr-name"> download_server</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 预留的存储空间 G(GB) M(MB) K(KB) 默认byte(B)，% 表示比例，如下，预留的存储空间为10%，即只占用90%</span>
+<span class="token attr-name"> reserved_storage_space</span> <span class="token punctuation">=</span> <span class="token attr-value">10%</span>
+<span class="token comment" spellcheck="true"> # log级别：alert error notice info debug</span>
+<span class="token attr-name"> log_level</span><span class="token punctuation">=</span><span class="token attr-value">info</span>
+<span class="token comment" spellcheck="true"> # 运行用户组，默认当前用户组</span>
+<span class="token attr-name"> run_by_group</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 运行用户，默认当前用户</span>
+<span class="token attr-name"> run_by_user</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 允许的host，例子如下</span>
+<span class="token comment" spellcheck="true"> # "*" 表示所有</span>
+<span class="token comment" spellcheck="true"> # 10.0.1.[1-15,20]</span>
+<span class="token comment" spellcheck="true"> # host[01-08,20-25].domain.com:</span>
+<span class="token comment" spellcheck="true"> # allow_hosts=10.0.1.[1-15,20]</span>
+<span class="token comment" spellcheck="true"> # allow_hosts=host[01-08,20-25].domain.com</span>
+<span class="token attr-name"> allow_hosts</span><span class="token punctuation">=</span><span class="token attr-value">*</span>
+<span class="token comment" spellcheck="true"> # 同步内存日志到磁盘的间隔时间，默认10s</span>
+<span class="token attr-name"> sync_log_buff_interval</span> <span class="token punctuation">=</span> <span class="token attr-value">10</span>
+<span class="token comment" spellcheck="true"> # 检查存储server存活的间隔时间，默认120s</span>
+<span class="token attr-name"> check_active_interval</span> <span class="token punctuation">=</span> <span class="token attr-value">120</span>
+<span class="token comment" spellcheck="true"> # 线程栈大小 >= 64KB</span>
+<span class="token attr-name"> thread_stack_size</span> <span class="token punctuation">=</span> <span class="token attr-value">64KB</span>
+<span class="token comment" spellcheck="true"> # 当存储server变化时，是否自动调整存储server的ip</span>
+<span class="token attr-name"> storage_ip_changed_auto_adjust</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token comment" spellcheck="true"> # 存储server同步文件的最大延时，默认86400s(1天)</span>
+<span class="token attr-name"> storage_sync_file_max_delay</span> <span class="token punctuation">=</span> <span class="token attr-value">86400</span>
+<span class="token comment" spellcheck="true"> # 存储server同步一个文件的最大时间</span>
+<span class="token attr-name"> storage_sync_file_max_time</span> <span class="token punctuation">=</span> <span class="token attr-value">300</span>
+<span class="token comment" spellcheck="true"> # 是否用一个主文件存储多个小文件</span>
+<span class="token attr-name"> use_trunk_file</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 最小的slot大小(多个小文件之间的空隙大小)，小于4k</span>
+<span class="token attr-name"> slot_min_size</span> <span class="token punctuation">=</span> <span class="token attr-value">256</span>
+<span class="token comment" spellcheck="true"> # 最大的slot大小(多个小文件之间的空隙大小) > slot_min_size</span>
+<span class="token comment" spellcheck="true"> # 当上传的文件大小 &lt; slot_max_size时，那么该文件将合并到一个主文件</span>
+<span class="token attr-name"> slot_max_size</span> <span class="token punctuation">=</span> <span class="token attr-value">16MB</span>
+<span class="token comment" spellcheck="true"> # 主文件大小 >= 4MB</span>
+<span class="token attr-name"> trunk_file_size</span> <span class="token punctuation">=</span> <span class="token attr-value">64MB</span>
+<span class="token comment" spellcheck="true"> # 是否提前创建trunk文件</span>
+<span class="token attr-name"> trunk_create_file_advance</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 创建trunk文件的基准时间</span>
+<span class="token attr-name"> trunk_create_file_time_base</span> <span class="token punctuation">=</span> <span class="token attr-value">02:00</span>
+<span class="token comment" spellcheck="true"> # 创建trunk文件的间隔时间，默认86400s(1天)</span>
+<span class="token attr-name"> trunk_create_file_interval</span> <span class="token punctuation">=</span> <span class="token attr-value">86400</span>
+<span class="token comment" spellcheck="true"> # 创建trunk文件的阈值空间</span>
+<span class="token attr-name"> trunk_create_file_space_threshold</span> <span class="token punctuation">=</span> <span class="token attr-value">20G</span>
+<span class="token comment" spellcheck="true"> # 当加载trunk空间空间时，是否检查trunk空间占用情况，设置为true，启动会变慢</span>
+<span class="token attr-name"> trunk_init_check_occupying</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 是否忽略storage_trunk.dat</span>
+<span class="token attr-name"> trunk_init_reload_from_binlog</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 压缩trunk binlog文件的间隔时间</span>
+<span class="token comment" spellcheck="true"> # 0表示不压缩</span>
+<span class="token attr-name"> trunk_compress_binlog_min_interval</span> <span class="token punctuation">=</span> <span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 是否使用storage ID，而不是ip地址</span>
+<span class="token attr-name"> use_storage_id</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 定义storage ids文件，相对或绝对路径</span>
+<span class="token attr-name"> storage_ids_filename</span> <span class="token punctuation">=</span> <span class="token attr-value">storage_ids.conf</span>
+<span class="token comment" spellcheck="true"> # 存储id类型，当use_storage_id=true时有效</span>
+<span class="token comment" spellcheck="true"> ## ip: 存储server的IP</span>
+<span class="token comment" spellcheck="true"> ## id: 存储server的ID</span>
+<span class="token attr-name"> id_type_in_filename</span> <span class="token punctuation">=</span> <span class="token attr-value">ip</span>
+<span class="token comment" spellcheck="true"> # 是否使用链接文件存储slave文件</span>
+<span class="token attr-name"> store_slave_file_use_link</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 是否滚动错误日志文件</span>
+<span class="token attr-name"> rotate_error_log</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 滚动错误日志文件的时间点</span>
+<span class="token attr-name"> error_log_rotate_time</span><span class="token punctuation">=</span><span class="token attr-value">00:00</span>
+<span class="token comment" spellcheck="true"> # 当错误日志文件超出该值时，滚动错误日志文件</span>
+<span class="token attr-name"> rotate_error_log_size</span> <span class="token punctuation">=</span> <span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 保存日志文件的天数</span>
+<span class="token comment" spellcheck="true"> # 0表示不删除日志文件</span>
+<span class="token attr-name"> log_file_keep_days</span> <span class="token punctuation">=</span> <span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 是否使用连接池</span>
+<span class="token attr-name"> use_connection_pool</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 连接最大空闲时间</span>
+<span class="token attr-name"> connection_pool_max_idle_time</span> <span class="token punctuation">=</span> <span class="token attr-value">3600</span>
+<span class="token comment" spellcheck="true"> # tracker的http端口</span>
+<span class="token attr-name"> http.server_port</span><span class="token punctuation">=</span><span class="token attr-value">8080</span>
+<span class="token comment" spellcheck="true"> # 检查http server存活的时间间隔</span>
+<span class="token attr-name"> http.check_alive_interval</span><span class="token punctuation">=</span><span class="token attr-value">30</span>
+<span class="token comment" spellcheck="true"> # 检查http sever存活的类型</span>
+<span class="token comment" spellcheck="true"> #   tcp : 仅连接http端口，不发请求</span>
+<span class="token comment" spellcheck="true"> #   http: 发http请求，并需返回200</span>
+<span class="token comment" spellcheck="true"> # default value is tcp</span>
+<span class="token attr-name"> http.check_alive_type</span><span class="token punctuation">=</span><span class="token attr-value">tcp</span>
+<span class="token comment" spellcheck="true"> # 检查http server的uri</span>
+<span class="token attr-name"> http.check_alive_uri</span><span class="token punctuation">=</span><span class="token attr-value">/status.html</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p>启动Tracker：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash"><code class="language-bash"> /usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 </li>
 <li><p>自启动Tracker：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">'/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart'</span> &gt;&gt; /etc/rc.d/rc.local</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash"><code class="language-bash"> <span class="token keyword">echo</span> <span class="token string">'/usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf restart'</span> <span class="token operator">>></span> /etc/rc.d/rc.local<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 </li>
 <li><p>依法部署另一个 Tracker</p>
 </li>
@@ -131,13 +325,142 @@
 <li><p>Storage 安装</p>
 <ol>
 <li><p>配置Storage(vim /etc/fdfs/storage.conf)：</p>
- <figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## 是否禁用该配置文件# false：开启</span></span><br><span class="line"><span class="comment"># true：禁用</span></span><br><span class="line"><span class="attr">disabled</span>=<span class="string">false</span></span><br><span class="line"><span class="comment"># 组名称</span></span><br><span class="line"><span class="attr">group_name</span>=<span class="string">group1</span></span><br><span class="line"><span class="comment"># 绑定地址</span></span><br><span class="line"><span class="comment"># 空字符表示绑定所有地址</span></span><br><span class="line"><span class="attr">bind_addr</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 当连接其他存储server时，是否绑定地址</span></span><br><span class="line"><span class="attr">client_bind</span>=<span class="string">true</span></span><br><span class="line"><span class="comment"># 存储server端口</span></span><br><span class="line"><span class="attr">port</span>=<span class="string">23000</span></span><br><span class="line"><span class="comment"># 连接超时</span></span><br><span class="line"><span class="attr">connect_timeout</span>=<span class="string">30</span></span><br><span class="line"><span class="comment"># 网络超时</span></span><br><span class="line"><span class="attr">network_timeout</span>=<span class="string">60</span></span><br><span class="line"><span class="comment"># 心跳</span></span><br><span class="line"><span class="attr">heart_beat_interval</span>=<span class="string">30</span></span><br><span class="line"><span class="comment"># 磁盘使用报道的时间间隔</span></span><br><span class="line"><span class="attr">stat_report_interval</span>=<span class="string">60</span></span><br><span class="line"><span class="comment"># 数据和日志目录</span></span><br><span class="line"><span class="attr">base_path</span>=<span class="string">/mnt/fastdfs</span></span><br><span class="line"><span class="comment"># 最大并发连接数</span></span><br><span class="line"><span class="attr">max_connections</span>=<span class="string">256</span></span><br><span class="line"><span class="comment"># 接收和发送数据的缓冲区大小</span></span><br><span class="line"><span class="attr">buff_size</span> = <span class="string">256KB</span></span><br><span class="line"><span class="comment"># 接受请求的线程数</span></span><br><span class="line"><span class="attr">accept_threads</span>=<span class="string">1</span></span><br><span class="line"><span class="comment"># 执行请求的线程数</span></span><br><span class="line"><span class="attr">work_threads</span>=<span class="string">4</span></span><br><span class="line"><span class="comment"># 磁盘读写是否分开</span></span><br><span class="line"><span class="attr">disk_rw_separated</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"># 每个存储基路径的读线程数</span></span><br><span class="line"><span class="attr">disk_reader_threads</span> = <span class="string">1</span></span><br><span class="line"><span class="comment"># 每个存储基路径的写线程数</span></span><br><span class="line"><span class="attr">disk_writer_threads</span> = <span class="string">1</span></span><br><span class="line"><span class="comment"># 当没有进行同步时, 多少毫秒后读取binlog</span></span><br><span class="line"><span class="attr">sync_wait_msec</span>=<span class="string">50</span></span><br><span class="line"><span class="comment"># 当同步完一个文件后, 暂停多少毫秒</span></span><br><span class="line"><span class="comment"># 0 表示不调用usleep</span></span><br><span class="line"><span class="attr">sync_interval</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 每天存储同步的开始时间</span></span><br><span class="line"><span class="attr">sync_start_time</span>=<span class="string">00:00</span></span><br><span class="line"><span class="comment"># 每天存储同步的结束时间</span></span><br><span class="line"><span class="attr">sync_end_time</span>=<span class="string">23:59</span></span><br><span class="line"><span class="comment"># 同步多少个文件后，写入mark文件</span></span><br><span class="line"><span class="attr">write_mark_file_freq</span>=<span class="string">500</span></span><br><span class="line"><span class="comment"># 路径(磁盘或挂载点)数</span></span><br><span class="line"><span class="attr">store_path_count</span>=<span class="string">1</span></span><br><span class="line"><span class="comment"># 存储路径</span></span><br><span class="line"><span class="attr">store_path0</span>=<span class="string">/mnt/fastdfs</span></span><br><span class="line"><span class="comment"># 子目录数</span></span><br><span class="line"><span class="attr">subdir_count_per_path</span>=<span class="string">256</span></span><br><span class="line"><span class="comment"># tracker地址，可以配置多个tracker_server</span></span><br><span class="line"><span class="attr">tracker_server</span>=<span class="string">10.112.88.105:22122</span></span><br><span class="line"><span class="comment"># tracker_server=10.112.88.104:22122</span></span><br><span class="line"><span class="comment"># 日志级别：alert error notice info debug</span></span><br><span class="line"><span class="attr">log_level</span>=<span class="string">debug</span></span><br><span class="line"><span class="comment"># 运行进程的用户组，默认当前用户组</span></span><br><span class="line"><span class="attr">run_by_group</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 运行进程的用户，默认当前用户</span></span><br><span class="line"><span class="attr">run_by_user</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 允许的host，例子如下# "*" 表示所有</span></span><br><span class="line"><span class="comment"># 10.0.1.[1-15,20]</span></span><br><span class="line"><span class="comment"># host[01-08,20-25].domain.com:</span></span><br><span class="line"><span class="comment"># allow_hosts=10.0.1.[1-15,20]</span></span><br><span class="line"><span class="comment"># allow_hosts=host[01-08,20-25].domain.com</span></span><br><span class="line"><span class="attr">allow_hosts</span>=<span class="string">*</span></span><br><span class="line"><span class="comment"># 文件分布模式</span></span><br><span class="line"><span class="comment"># 0: 轮询</span></span><br><span class="line"><span class="comment"># 1: 随机</span></span><br><span class="line"><span class="attr">file_distribute_path_mode</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 写多少个文件后，轮到下一个路径</span></span><br><span class="line"><span class="attr">file_distribute_rotate_count</span>=<span class="string">100</span></span><br><span class="line"><span class="comment"># 当写入多大文件时，调用fsync</span></span><br><span class="line"><span class="comment"># 0: 不调用</span></span><br><span class="line"><span class="comment"># other: 文件大小(byte)</span></span><br><span class="line"><span class="attr">fsync_after_written_bytes</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 同步内存日志到磁盘的间隔时间，默认10s</span></span><br><span class="line"><span class="attr">sync_log_buff_interval</span>=<span class="string">10</span></span><br><span class="line"><span class="comment"># 同步binlog到磁盘的间隔时间，默认10s</span></span><br><span class="line"><span class="attr">sync_binlog_buff_interval</span>=<span class="string">10</span></span><br><span class="line"><span class="comment"># 同步存储状态信息到磁盘的间隔时间，默认300s</span></span><br><span class="line"><span class="attr">sync_stat_file_interval</span>=<span class="string">300</span></span><br><span class="line"><span class="comment"># 线程栈大小 &gt;= 512KB</span></span><br><span class="line"><span class="attr">thread_stack_size</span>=<span class="string">512KB</span></span><br><span class="line"><span class="comment"># 上传文件的优先级，tracker中使用</span></span><br><span class="line"><span class="attr">upload_priority</span>=<span class="string">10</span></span><br><span class="line"><span class="comment"># the NIC alias prefix, such as eth in Linux, you can see it by ifconfig -a</span></span><br><span class="line"><span class="comment"># multi aliases split by comma. empty value means auto set by OS type</span></span><br><span class="line"><span class="comment"># default values is empty</span></span><br><span class="line"><span class="attr">if_alias_prefix</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># 是否检查文件重复</span></span><br><span class="line"><span class="attr">check_file_duplicate</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># 文件签名方法</span></span><br><span class="line"><span class="comment">## hash: hash</span></span><br><span class="line"><span class="comment">## md5: MD5</span></span><br><span class="line"><span class="attr">file_signature_method</span>=<span class="string">hash</span></span><br><span class="line"><span class="comment"># 存储文件索引的命名空间，check_file_duplicate=true时</span></span><br><span class="line"><span class="attr">key_namespace</span>=<span class="string">FastDFS</span></span><br><span class="line"><span class="comment"># 设置与FastDHT保持长连接的数目，0表示使用短连接</span></span><br><span class="line"><span class="attr">keep_alive</span>=<span class="string">0</span></span><br><span class="line"><span class="comment"># FastDHT server列表，需要安装FastDHT</span></span><br><span class="line"><span class="comment">##include /home/yuqing/fastdht/conf/fdht_servers.conf</span></span><br><span class="line"><span class="comment"># 是否记录访问日志</span></span><br><span class="line"><span class="attr">use_access_log</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"># 是否每天滚动访问日志文件</span></span><br><span class="line"><span class="attr">rotate_access_log</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"># 访问日志滚动时间点</span></span><br><span class="line"><span class="attr">access_log_rotate_time</span>=<span class="string">00:00</span></span><br><span class="line"><span class="comment"># 是否每天滚动错误日志文件</span></span><br><span class="line"><span class="attr">rotate_error_log</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"># 错误日志滚动时间点</span></span><br><span class="line"><span class="attr">error_log_rotate_time</span>=<span class="string">00:00</span></span><br><span class="line"><span class="comment"># 访问日志滚动大小</span></span><br><span class="line"><span class="attr">rotate_access_log_size</span> = <span class="string">0</span></span><br><span class="line"><span class="comment"># 错误日志滚动大小</span></span><br><span class="line"><span class="attr">rotate_error_log_size</span> = <span class="string">0</span></span><br><span class="line"><span class="comment"># 日志保留天数</span></span><br><span class="line"><span class="attr">log_file_keep_days</span> = <span class="string">7</span></span><br><span class="line"><span class="comment"># 同步文件时是否跳过无效的文件</span></span><br><span class="line"><span class="attr">file_sync_skip_invalid_record</span>=<span class="string">false</span></span><br><span class="line"><span class="comment"># 是否使用连接池</span></span><br><span class="line"><span class="attr">use_connection_pool</span> = <span class="string">false</span></span><br><span class="line"><span class="comment"># 连接最大空间时间</span></span><br><span class="line"><span class="attr">connection_pool_max_idle_time</span> = <span class="string">3600</span></span><br><span class="line"><span class="comment"># 域名</span></span><br><span class="line"><span class="meta">http.domain_name</span>=<span class="string"></span></span><br><span class="line"><span class="comment"># http端口</span></span><br><span class="line"><span class="meta">http.server_port</span>=<span class="string">8888</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-properties"><code class="language-properties"><span class="token comment" spellcheck="true"> ## 是否禁用该配置文件# false：开启</span>
+<span class="token comment" spellcheck="true"> # true：禁用</span>
+<span class="token attr-name"> disabled</span><span class="token punctuation">=</span><span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 组名称</span>
+<span class="token attr-name"> group_name</span><span class="token punctuation">=</span><span class="token attr-value">group1</span>
+<span class="token comment" spellcheck="true"> # 绑定地址</span>
+<span class="token comment" spellcheck="true"> # 空字符表示绑定所有地址</span>
+<span class="token attr-name"> bind_addr</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 当连接其他存储server时，是否绑定地址</span>
+<span class="token attr-name"> client_bind</span><span class="token punctuation">=</span><span class="token attr-value">true</span>
+<span class="token comment" spellcheck="true"> # 存储server端口</span>
+<span class="token attr-name"> port</span><span class="token punctuation">=</span><span class="token attr-value">23000</span>
+<span class="token comment" spellcheck="true"> # 连接超时</span>
+<span class="token attr-name"> connect_timeout</span><span class="token punctuation">=</span><span class="token attr-value">30</span>
+<span class="token comment" spellcheck="true"> # 网络超时</span>
+<span class="token attr-name"> network_timeout</span><span class="token punctuation">=</span><span class="token attr-value">60</span>
+<span class="token comment" spellcheck="true"> # 心跳</span>
+<span class="token attr-name"> heart_beat_interval</span><span class="token punctuation">=</span><span class="token attr-value">30</span>
+<span class="token comment" spellcheck="true"> # 磁盘使用报道的时间间隔</span>
+<span class="token attr-name"> stat_report_interval</span><span class="token punctuation">=</span><span class="token attr-value">60</span>
+<span class="token comment" spellcheck="true"> # 数据和日志目录</span>
+<span class="token attr-name"> base_path</span><span class="token punctuation">=</span><span class="token attr-value">/mnt/fastdfs</span>
+<span class="token comment" spellcheck="true"> # 最大并发连接数</span>
+<span class="token attr-name"> max_connections</span><span class="token punctuation">=</span><span class="token attr-value">256</span>
+<span class="token comment" spellcheck="true"> # 接收和发送数据的缓冲区大小</span>
+<span class="token attr-name"> buff_size</span> <span class="token punctuation">=</span> <span class="token attr-value">256KB</span>
+<span class="token comment" spellcheck="true"> # 接受请求的线程数</span>
+<span class="token attr-name"> accept_threads</span><span class="token punctuation">=</span><span class="token attr-value">1</span>
+<span class="token comment" spellcheck="true"> # 执行请求的线程数</span>
+<span class="token attr-name"> work_threads</span><span class="token punctuation">=</span><span class="token attr-value">4</span>
+<span class="token comment" spellcheck="true"> # 磁盘读写是否分开</span>
+<span class="token attr-name"> disk_rw_separated</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token comment" spellcheck="true"> # 每个存储基路径的读线程数</span>
+<span class="token attr-name"> disk_reader_threads</span> <span class="token punctuation">=</span> <span class="token attr-value">1</span>
+<span class="token comment" spellcheck="true"> # 每个存储基路径的写线程数</span>
+<span class="token attr-name"> disk_writer_threads</span> <span class="token punctuation">=</span> <span class="token attr-value">1</span>
+<span class="token comment" spellcheck="true"> # 当没有进行同步时, 多少毫秒后读取binlog</span>
+<span class="token attr-name"> sync_wait_msec</span><span class="token punctuation">=</span><span class="token attr-value">50</span>
+<span class="token comment" spellcheck="true"> # 当同步完一个文件后, 暂停多少毫秒</span>
+<span class="token comment" spellcheck="true"> # 0 表示不调用usleep</span>
+<span class="token attr-name"> sync_interval</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 每天存储同步的开始时间</span>
+<span class="token attr-name"> sync_start_time</span><span class="token punctuation">=</span><span class="token attr-value">00:00</span>
+<span class="token comment" spellcheck="true"> # 每天存储同步的结束时间</span>
+<span class="token attr-name"> sync_end_time</span><span class="token punctuation">=</span><span class="token attr-value">23:59</span>
+<span class="token comment" spellcheck="true"> # 同步多少个文件后，写入mark文件</span>
+<span class="token attr-name"> write_mark_file_freq</span><span class="token punctuation">=</span><span class="token attr-value">500</span>
+<span class="token comment" spellcheck="true"> # 路径(磁盘或挂载点)数</span>
+<span class="token attr-name"> store_path_count</span><span class="token punctuation">=</span><span class="token attr-value">1</span>
+<span class="token comment" spellcheck="true"> # 存储路径</span>
+<span class="token attr-name"> store_path0</span><span class="token punctuation">=</span><span class="token attr-value">/mnt/fastdfs</span>
+<span class="token comment" spellcheck="true"> # 子目录数</span>
+<span class="token attr-name"> subdir_count_per_path</span><span class="token punctuation">=</span><span class="token attr-value">256</span>
+<span class="token comment" spellcheck="true"> # tracker地址，可以配置多个tracker_server</span>
+<span class="token attr-name"> tracker_server</span><span class="token punctuation">=</span><span class="token attr-value">10.112.88.105:22122</span>
+<span class="token comment" spellcheck="true"> # tracker_server=10.112.88.104:22122</span>
+<span class="token comment" spellcheck="true"> # 日志级别：alert error notice info debug</span>
+<span class="token attr-name"> log_level</span><span class="token punctuation">=</span><span class="token attr-value">debug</span>
+<span class="token comment" spellcheck="true"> # 运行进程的用户组，默认当前用户组</span>
+<span class="token attr-name"> run_by_group</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 运行进程的用户，默认当前用户</span>
+<span class="token attr-name"> run_by_user</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 允许的host，例子如下# "*" 表示所有</span>
+<span class="token comment" spellcheck="true"> # 10.0.1.[1-15,20]</span>
+<span class="token comment" spellcheck="true"> # host[01-08,20-25].domain.com:</span>
+<span class="token comment" spellcheck="true"> # allow_hosts=10.0.1.[1-15,20]</span>
+<span class="token comment" spellcheck="true"> # allow_hosts=host[01-08,20-25].domain.com</span>
+<span class="token attr-name"> allow_hosts</span><span class="token punctuation">=</span><span class="token attr-value">*</span>
+<span class="token comment" spellcheck="true"> # 文件分布模式</span>
+<span class="token comment" spellcheck="true"> # 0: 轮询</span>
+<span class="token comment" spellcheck="true"> # 1: 随机</span>
+<span class="token attr-name"> file_distribute_path_mode</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 写多少个文件后，轮到下一个路径</span>
+<span class="token attr-name"> file_distribute_rotate_count</span><span class="token punctuation">=</span><span class="token attr-value">100</span>
+<span class="token comment" spellcheck="true"> # 当写入多大文件时，调用fsync</span>
+<span class="token comment" spellcheck="true"> # 0: 不调用</span>
+<span class="token comment" spellcheck="true"> # other: 文件大小(byte)</span>
+<span class="token attr-name"> fsync_after_written_bytes</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 同步内存日志到磁盘的间隔时间，默认10s</span>
+<span class="token attr-name"> sync_log_buff_interval</span><span class="token punctuation">=</span><span class="token attr-value">10</span>
+<span class="token comment" spellcheck="true"> # 同步binlog到磁盘的间隔时间，默认10s</span>
+<span class="token attr-name"> sync_binlog_buff_interval</span><span class="token punctuation">=</span><span class="token attr-value">10</span>
+<span class="token comment" spellcheck="true"> # 同步存储状态信息到磁盘的间隔时间，默认300s</span>
+<span class="token attr-name"> sync_stat_file_interval</span><span class="token punctuation">=</span><span class="token attr-value">300</span>
+<span class="token comment" spellcheck="true"> # 线程栈大小 >= 512KB</span>
+<span class="token attr-name"> thread_stack_size</span><span class="token punctuation">=</span><span class="token attr-value">512KB</span>
+<span class="token comment" spellcheck="true"> # 上传文件的优先级，tracker中使用</span>
+<span class="token attr-name"> upload_priority</span><span class="token punctuation">=</span><span class="token attr-value">10</span>
+<span class="token comment" spellcheck="true"> # the NIC alias prefix, such as eth in Linux, you can see it by ifconfig -a</span>
+<span class="token comment" spellcheck="true"> # multi aliases split by comma. empty value means auto set by OS type</span>
+<span class="token comment" spellcheck="true"> # default values is empty</span>
+<span class="token attr-name"> if_alias_prefix</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # 是否检查文件重复</span>
+<span class="token attr-name"> check_file_duplicate</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 文件签名方法</span>
+<span class="token comment" spellcheck="true"> ## hash: hash</span>
+<span class="token comment" spellcheck="true"> ## md5: MD5</span>
+<span class="token attr-name"> file_signature_method</span><span class="token punctuation">=</span><span class="token attr-value">hash</span>
+<span class="token comment" spellcheck="true"> # 存储文件索引的命名空间，check_file_duplicate=true时</span>
+<span class="token attr-name"> key_namespace</span><span class="token punctuation">=</span><span class="token attr-value">FastDFS</span>
+<span class="token comment" spellcheck="true"> # 设置与FastDHT保持长连接的数目，0表示使用短连接</span>
+<span class="token attr-name"> keep_alive</span><span class="token punctuation">=</span><span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # FastDHT server列表，需要安装FastDHT</span>
+<span class="token comment" spellcheck="true"> ##include /home/yuqing/fastdht/conf/fdht_servers.conf</span>
+<span class="token comment" spellcheck="true"> # 是否记录访问日志</span>
+<span class="token attr-name"> use_access_log</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token comment" spellcheck="true"> # 是否每天滚动访问日志文件</span>
+<span class="token attr-name"> rotate_access_log</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token comment" spellcheck="true"> # 访问日志滚动时间点</span>
+<span class="token attr-name"> access_log_rotate_time</span><span class="token punctuation">=</span><span class="token attr-value">00:00</span>
+<span class="token comment" spellcheck="true"> # 是否每天滚动错误日志文件</span>
+<span class="token attr-name"> rotate_error_log</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token comment" spellcheck="true"> # 错误日志滚动时间点</span>
+<span class="token attr-name"> error_log_rotate_time</span><span class="token punctuation">=</span><span class="token attr-value">00:00</span>
+<span class="token comment" spellcheck="true"> # 访问日志滚动大小</span>
+<span class="token attr-name"> rotate_access_log_size</span> <span class="token punctuation">=</span> <span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 错误日志滚动大小</span>
+<span class="token attr-name"> rotate_error_log_size</span> <span class="token punctuation">=</span> <span class="token attr-value">0</span>
+<span class="token comment" spellcheck="true"> # 日志保留天数</span>
+<span class="token attr-name"> log_file_keep_days</span> <span class="token punctuation">=</span> <span class="token attr-value">7</span>
+<span class="token comment" spellcheck="true"> # 同步文件时是否跳过无效的文件</span>
+<span class="token attr-name"> file_sync_skip_invalid_record</span><span class="token punctuation">=</span><span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 是否使用连接池</span>
+<span class="token attr-name"> use_connection_pool</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token comment" spellcheck="true"> # 连接最大空间时间</span>
+<span class="token attr-name"> connection_pool_max_idle_time</span> <span class="token punctuation">=</span> <span class="token attr-value">3600</span>
+<span class="token comment" spellcheck="true"> # 域名</span>
+<span class="token attr-name"> http.domain_name</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> # http端口</span>
+<span class="token attr-name"> http.server_port</span><span class="token punctuation">=</span><span class="token attr-value">8888</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p>启动Storage：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash"><code class="language-bash"> /usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 </li>
 <li><p>自启动Storage：</p>
- <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">'/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart'</span> &gt;&gt; /etc/rc.d/rc.local</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-bash"><code class="language-bash"> <span class="token keyword">echo</span> <span class="token string">'/usr/bin/fdfs_storaged /etc/fdfs/storage.conf restart'</span> <span class="token operator">>></span> /etc/rc.d/rc.local<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 </li>
 </ol>
 </li>
@@ -150,20 +473,143 @@
 <p>  整合步骤</p>
 <ol>
 <li><p>在Storage上配置fastdfs-nginx-module所需的配置文件</p>
- <figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 配置fastdfs-nginx-module所需的配置文件mod_fastdfs.conf，http.conf，mime.types</span></span><br><span class="line"><span class="comment"># vim /etc/fdfs/mod_fastdfs.conf</span></span><br><span class="line"><span class="attr">connect_timeout</span>=<span class="string">5</span></span><br><span class="line"><span class="attr">network_timeout</span>=<span class="string">30</span></span><br><span class="line"><span class="attr">base_path</span>=<span class="string">/mnt/fastdfs/logs</span></span><br><span class="line"><span class="attr">load_fdfs_parameters_from_tracker</span>=<span class="string">true</span></span><br><span class="line"><span class="attr">storage_sync_file_max_delay</span> = <span class="string">86400</span></span><br><span class="line"><span class="attr">use_storage_id</span> = <span class="string">false</span></span><br><span class="line"><span class="attr">storage_ids_filename</span> = <span class="string">storage_ids.conf</span></span><br><span class="line"><span class="attr">tracker_server</span>=<span class="string">10.112.88.105:22122</span></span><br><span class="line"><span class="attr">storage_server_port</span>=<span class="string">23000</span></span><br><span class="line"><span class="attr">group_name</span>=<span class="string">group1 			# 与该Storage的配置一致</span></span><br><span class="line"><span class="attr">url_have_group_name</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">store_path_count</span>=<span class="string">1 			# 与该Storage的配置一致</span></span><br><span class="line"><span class="attr">store_path0</span>=<span class="string">/mnt/fastdfs 	# 与该Storage的配置一致</span></span><br><span class="line"><span class="attr">log_level</span>=<span class="string">debug</span></span><br><span class="line"><span class="attr">log_filename</span>=<span class="string">/usr/local/nginx/logs/mod_fastdfs.log</span></span><br><span class="line"><span class="attr">response_mode</span>=<span class="string">proxy</span></span><br><span class="line"><span class="attr">if_alias_prefix</span>=<span class="string"></span></span><br><span class="line"><span class="comment">#include http.conf</span></span><br><span class="line"><span class="attr">flv_support</span> = <span class="string">true</span></span><br><span class="line"><span class="attr">flv_extension</span> = <span class="string">flv</span></span><br><span class="line"><span class="attr">group_count</span> = <span class="string">0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># vim /etc/fdfs/http.conf</span></span><br><span class="line"><span class="meta">http.default_content_type</span> = <span class="string">application/octet-stream</span></span><br><span class="line"><span class="meta">http.mime_types_filename</span>=<span class="string">mime.types</span></span><br><span class="line"><span class="meta">http.anti_steal.check_token</span>=<span class="string">false</span></span><br><span class="line"><span class="meta">http.anti_steal.token_ttl</span>=<span class="string">900</span></span><br><span class="line"><span class="meta">http.anti_steal.secret_key</span>=<span class="string">FastDFS1234567890</span></span><br><span class="line"><span class="meta">http.anti_steal.token_check_fail</span>=<span class="string">/path/to/check_failed.jpg</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置mime.types</span></span><br><span class="line"><span class="attr">cp</span> <span class="string">/path/to/fastdfs/conf/mime.types /etc/fdfs/mime.types</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-properties"><code class="language-properties"><span class="token comment" spellcheck="true"> # 配置fastdfs-nginx-module所需的配置文件mod_fastdfs.conf，http.conf，mime.types</span>
+<span class="token comment" spellcheck="true"> # vim /etc/fdfs/mod_fastdfs.conf</span>
+<span class="token attr-name"> connect_timeout</span><span class="token punctuation">=</span><span class="token attr-value">5</span>
+<span class="token attr-name"> network_timeout</span><span class="token punctuation">=</span><span class="token attr-value">30</span>
+<span class="token attr-name"> base_path</span><span class="token punctuation">=</span><span class="token attr-value">/mnt/fastdfs/logs</span>
+<span class="token attr-name"> load_fdfs_parameters_from_tracker</span><span class="token punctuation">=</span><span class="token attr-value">true</span>
+<span class="token attr-name"> storage_sync_file_max_delay</span> <span class="token punctuation">=</span> <span class="token attr-value">86400</span>
+<span class="token attr-name"> use_storage_id</span> <span class="token punctuation">=</span> <span class="token attr-value">false</span>
+<span class="token attr-name"> storage_ids_filename</span> <span class="token punctuation">=</span> <span class="token attr-value">storage_ids.conf</span>
+<span class="token attr-name"> tracker_server</span><span class="token punctuation">=</span><span class="token attr-value">10.112.88.105:22122</span>
+<span class="token attr-name"> storage_server_port</span><span class="token punctuation">=</span><span class="token attr-value">23000</span>
+<span class="token attr-name"> group_name</span><span class="token punctuation">=</span><span class="token attr-value">group1             # 与该Storage的配置一致</span>
+<span class="token attr-name"> url_have_group_name</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token attr-name"> store_path_count</span><span class="token punctuation">=</span><span class="token attr-value">1             # 与该Storage的配置一致</span>
+<span class="token attr-name"> store_path0</span><span class="token punctuation">=</span><span class="token attr-value">/mnt/fastdfs     # 与该Storage的配置一致</span>
+<span class="token attr-name"> log_level</span><span class="token punctuation">=</span><span class="token attr-value">debug</span>
+<span class="token attr-name"> log_filename</span><span class="token punctuation">=</span><span class="token attr-value">/usr/local/nginx/logs/mod_fastdfs.log</span>
+<span class="token attr-name"> response_mode</span><span class="token punctuation">=</span><span class="token attr-value">proxy</span>
+<span class="token attr-name"> if_alias_prefix</span><span class="token punctuation">=</span>
+<span class="token comment" spellcheck="true"> #include http.conf</span>
+<span class="token attr-name"> flv_support</span> <span class="token punctuation">=</span> <span class="token attr-value">true</span>
+<span class="token attr-name"> flv_extension</span> <span class="token punctuation">=</span> <span class="token attr-value">flv</span>
+<span class="token attr-name"> group_count</span> <span class="token punctuation">=</span> <span class="token attr-value">0</span>
 
- <figure class="highlight zsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解压缩fastdfs-nginx-module_v1.16.tar.gz</span></span><br><span class="line">tar -zxf fastdfs-nginx-module_v1.16.tar.gz</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置fastdfs-nginx-module/src/config</span></span><br><span class="line"><span class="comment"># vim fastdfs-nginx-module/src/config</span></span><br><span class="line"><span class="comment"># CORE_INCS 和 CFLAGS</span></span><br><span class="line">ngx_addon_name=ngx_http_fastdfs_module</span><br><span class="line">HTTP_MODULES=<span class="string">"<span class="variable">$HTTP_MODULES</span> ngx_http_fastdfs_module"</span></span><br><span class="line">NGX_ADDON_SRCS=<span class="string">"<span class="variable">$NGX_ADDON_SRCS</span> <span class="variable">$ngx_addon_dir</span>/ngx_http_fastdfs_module.c"</span></span><br><span class="line">CORE_INCS=<span class="string">"<span class="variable">$CORE_INCS</span> /path/to/fastdfs /path/to/fastcommon/"</span></span><br><span class="line">CORE_LIBS=<span class="string">"<span class="variable">$CORE_LIBS</span> -L/usr/local/lib -lfastcommon -lfdfsclient"</span></span><br><span class="line">CFLAGS=<span class="string">"<span class="variable">$CFLAGS</span> -D_FILE_OFFSET_BITS=64 -DFDFS_OUTPUT_CHUNK_SIZE='256*1024' -DFDFS_MOD_CONF_FILENAME='\"/path/to/mod_fastdfs.conf\"'"</span></span><br></pre></td></tr></table></figure>
+<span class="token comment" spellcheck="true"> # vim /etc/fdfs/http.conf</span>
+<span class="token attr-name"> http.default_content_type</span> <span class="token punctuation">=</span> <span class="token attr-value">application/octet-stream</span>
+<span class="token attr-name"> http.mime_types_filename</span><span class="token punctuation">=</span><span class="token attr-value">mime.types</span>
+<span class="token attr-name"> http.anti_steal.check_token</span><span class="token punctuation">=</span><span class="token attr-value">false</span>
+<span class="token attr-name"> http.anti_steal.token_ttl</span><span class="token punctuation">=</span><span class="token attr-value">900</span>
+<span class="token attr-name"> http.anti_steal.secret_key</span><span class="token punctuation">=</span><span class="token attr-value">FastDFS1234567890</span>
+<span class="token attr-name"> http.anti_steal.token_check_fail</span><span class="token punctuation">=</span><span class="token attr-value">/path/to/check_failed.jpg</span>
+
+<span class="token comment" spellcheck="true"> # 配置mime.types</span>
+<span class="token attr-name"> cp</span> <span class="token attr-value">/path/to/fastdfs/conf/mime.types /etc/fdfs/mime.types</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-zsh"><code class="language-zsh"> # 解压缩fastdfs-nginx-module_v1.16.tar.gz
+ tar -zxf fastdfs-nginx-module_v1.16.tar.gz
+
+ # 配置fastdfs-nginx-module/src/config
+ # vim fastdfs-nginx-module/src/config
+ # CORE_INCS 和 CFLAGS
+ ngx_addon_name=ngx_http_fastdfs_module
+ HTTP_MODULES="$HTTP_MODULES ngx_http_fastdfs_module"
+ NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_fastdfs_module.c"
+ CORE_INCS="$CORE_INCS /path/to/fastdfs /path/to/fastcommon/"
+ CORE_LIBS="$CORE_LIBS -L/usr/local/lib -lfastcommon -lfdfsclient"
+ CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -DFDFS_OUTPUT_CHUNK_SIZE='256*1024' -DFDFS_MOD_CONF_FILENAME='\"/path/to/mod_fastdfs.conf\"'"<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 <li><p>在Storage上安装nginx</p>
- <figure class="highlight zsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装nginx依赖包</span></span><br><span class="line">yum -y install gcc gcc-c++ make zlib-devel pcre-devel openssl-devel</span><br><span class="line"></span><br><span class="line"><span class="comment"># 建立nginx用户</span></span><br><span class="line">groupadd nginx</span><br><span class="line">useradd -g nginx nginx --shell=/sbin/nologin</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置，编译，安装nginx</span></span><br><span class="line">tar -zxf nginx-1.9.9.tar.gz</span><br><span class="line"><span class="built_in">cd</span> nginx-1.9.9</span><br><span class="line">./configure --prefix=/usr/<span class="built_in">local</span>/nginx --add-module=/path/to/fastdfs-nginx-module/src --group=nginx --user=nginx</span><br><span class="line">make &amp;&amp; make install</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更改nginx目录权限</span></span><br><span class="line">chown -R nginx:nginx /usr/<span class="built_in">local</span>/nginx</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-zsh"><code class="language-zsh"> # 安装nginx依赖包
+ yum -y install gcc gcc-c++ make zlib-devel pcre-devel openssl-devel
 
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"># 最简配置&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf</span><br><span class="line">user  nginx;</span><br><span class="line">worker_processes  1;</span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections  1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http &#123;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        listen       80;</span><br><span class="line">        server_name  localhost;</span><br><span class="line"></span><br><span class="line">        # group1为该Storage所在的group</span><br><span class="line">        location &#x2F;group1&#x2F;M00 &#123;</span><br><span class="line">            # 该Storage的data目录</span><br><span class="line">            root &#x2F;mnt&#x2F;fastdfs&#x2F;data;</span><br><span class="line">            # 由于fastdfs保存的文件名已经编码，源文件名将丢失，应用可通过在请求url后加oname参数指定源文件名</span><br><span class="line">            if ($arg_oname !&#x3D; &#39;&#39;)&#123;</span><br><span class="line">                add_header Content-Disposition &quot;attachment;filename&#x3D;$arg_oname&quot;;</span><br><span class="line">            &#125;</span><br><span class="line">            # 调用nginx-fastdfs-module模块</span><br><span class="line">            ngx_fastdfs_module;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+ # 建立nginx用户
+ groupadd nginx
+ useradd -g nginx nginx --shell=/sbin/nologin
 
- <figure class="highlight zsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启动nginx，logs/error.log没有错误，即启动成功</span></span><br><span class="line">/usr/<span class="built_in">local</span>/nginx/sbin/nginx</span><br></pre></td></tr></table></figure>
+ # 配置，编译，安装nginx
+ tar -zxf nginx-1.9.9.tar.gz
+ cd nginx-1.9.9
+ ./configure --prefix=/usr/local/nginx --add-module=/path/to/fastdfs-nginx-module/src --group=nginx --user=nginx
+ make && make install
+
+ # 更改nginx目录权限
+ chown -R nginx:nginx /usr/local/nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-conf"><code class="language-conf"> # 最简配置/usr/local/nginx/conf/nginx.conf
+ user  nginx;
+ worker_processes  1;
+ events {
+     worker_connections  1024;
+ }
+
+ http {
+
+     server {
+         listen       80;
+         server_name  localhost;
+
+         # group1为该Storage所在的group
+         location /group1/M00 {
+             # 该Storage的data目录
+             root /mnt/fastdfs/data;
+             # 由于fastdfs保存的文件名已经编码，源文件名将丢失，应用可通过在请求url后加oname参数指定源文件名
+             if ($arg_oname != ''){
+                 add_header Content-Disposition "attachment;filename=$arg_oname";
+             }
+             # 调用nginx-fastdfs-module模块
+             ngx_fastdfs_module;
+         }
+     }
+ }<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-zsh"><code class="language-zsh"> # 启动nginx，logs/error.log没有错误，即启动成功
+ /usr/local/nginx/sbin/nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 </li>
 <li><p>在其他服务器上安装用于图片文件负载的nginx</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"># 安装过程同上，只是不需要配置和安装fastdfs-nginx-module模块</span><br><span class="line"></span><br><span class="line"># 最简配置&#x2F;usr&#x2F;local&#x2F;nginx&#x2F;conf&#x2F;nginx.conf</span><br><span class="line">user  nginx;</span><br><span class="line">worker_processes  1;</span><br><span class="line">events &#123;</span><br><span class="line">    worker_connections  1024;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http &#123;</span><br><span class="line"></span><br><span class="line">    # group1的Storage集群</span><br><span class="line">    upstream group1_cluster &#123;</span><br><span class="line">        server 10.112.88.106;</span><br><span class="line">        server 10.112.88.109;</span><br><span class="line">        server 10.112.88.151;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    # group2的Storage集群</span><br><span class="line">    upstream group2_cluster &#123;</span><br><span class="line">        server 10.112.88.153;</span><br><span class="line">        server 10.112.88.158;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        listen       80;</span><br><span class="line">        server_name  10.112.88.105;</span><br><span class="line"></span><br><span class="line">        location &#x2F;group1 &#123;</span><br><span class="line">            proxy_pass              http:&#x2F;&#x2F;group1_cluster;</span><br><span class="line">            proxy_set_header        X-Real-IP $remote_addr;</span><br><span class="line">            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">            proxy_set_header        Host $http_host;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    location &#x2F;group2 &#123;</span><br><span class="line">            proxy_pass              http:&#x2F;&#x2F;group2_cluster;</span><br><span class="line">            proxy_set_header        X-Real-IP $remote_addr;</span><br><span class="line">            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">            proxy_set_header        Host $http_host;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-conf"><code class="language-conf"> # 安装过程同上，只是不需要配置和安装fastdfs-nginx-module模块
 
+ # 最简配置/usr/local/nginx/conf/nginx.conf
+ user  nginx;
+ worker_processes  1;
+ events {
+     worker_connections  1024;
+ }
+
+ http {
+
+     # group1的Storage集群
+     upstream group1_cluster {
+         server 10.112.88.106;
+         server 10.112.88.109;
+         server 10.112.88.151;
+     }
+
+     # group2的Storage集群
+     upstream group2_cluster {
+         server 10.112.88.153;
+         server 10.112.88.158;
+     }
+
+     server {
+         listen       80;
+         server_name  10.112.88.105;
+
+         location /group1 {
+             proxy_pass              http://group1_cluster;
+             proxy_set_header        X-Real-IP $remote_addr;
+             proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+             proxy_set_header        Host $http_host;
+         }
+
+     location /group2 {
+             proxy_pass              http://group2_cluster;
+             proxy_set_header        X-Real-IP $remote_addr;
+             proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+             proxy_set_header        Host $http_host;
+         }
+     }
+ }
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 </li>
 </ol>
 </li>
